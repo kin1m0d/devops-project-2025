@@ -25,4 +25,4 @@ jobs:
           echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
       - name: Push to dockerhub
         run: |
-          docker push kinimod311/devops-project-2025:${{ env.SHORT_SHA }} .
+          docker push kinimod311/devops-project-2025:${{ env.SHORT_SHA }}
