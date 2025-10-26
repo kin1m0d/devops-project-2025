@@ -1,0 +1,14 @@
+image:
+  repository: kinimod311/devops-project-2025
+  tag: latest
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 8080
+ingress:
+  enabled: false
+serviceAccount:
+  enabled: false
+autoScaling:
+  enabled: false
+

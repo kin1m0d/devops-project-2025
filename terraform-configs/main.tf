@@ -4,6 +4,10 @@ terraform {
             source = "scott-the-programmer/minikube"
             version = "0.4.2"
         }
+        helm = {
+            source  = "hashicorp/helm"
+            version = "2.16.1" # Use the version specified in the tutorial
+        }
     }
 }
 
