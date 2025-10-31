@@ -1,7 +1,7 @@
 
 # Day 1 (23.10.2025)
 - Started project on Windows WSL2
-- Installed terraform on Windows
+- Installed terraform on Windows (which I couln't make it work so I installed on Ubuntu as well)
 - Installed code extension "Terraform" from Anton Kulikov
 - Installed docker desktop on Windows
 - Installed k8 on Ubuntu https://gaganmanku96.medium.com/kubernetes-setup-with-minikube-on-wsl2-2023-a58aea81e6a3
@@ -11,7 +11,7 @@
 # Day 2 (25.10.2025)
 Found the error "push access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed"
 
-"docker build -t kinimod311/devops-project-2025:test ." is correct not "kin1m0d" which is my guthub username
+"docker build -t kinimod311/devops-project-2025:test ." is correct not "kin1m0d" which is my github username
 
 - Installed helm on Windows https://github.com/helm/helm/releases (not relly helpful for wsl)
 - Installed helm on WSL2 https://www.adamhancock.co.uk/blog/install-helm-on-wsl/
@@ -67,7 +67,7 @@ kubectl port-forward svc/argocd-server -n argocd 8082:443
 ``` sh
 kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 -d
 ```
-Log in with "admin" and the retrieved password (8ImDJ8ejJN4NhvS4)
+Log in with "admin" and the retrieved password
 
 
 - Installed latest argocd on WSL2 https://argo-cd.readthedocs.io/en/stable/cli_installation/
@@ -224,10 +224,7 @@ applicationsets.argoproj.io   2025-10-25T15:11:19Z
 appprojects.argoproj.io       2025-10-25T15:11:19Z
 
 
-I'm a fool, turns out, this is wrong
-apiVersion: argoproj.io.v1alpha1
-and this is right....
-apiVersion: argoproj.io/v1alpha1
+I'm a fool, turns out, this is wrong `apiVersion: argoproj.io.v1alpha1` and this is right.... `apiVersion: argoproj.io/v1alpha1`
 
 ``` sh
 dom@DESKTOP-DOM:~/git/devops-project-2025$ kubectl apply -f argocd-app.yaml
@@ -295,8 +292,10 @@ helm.go:92: 2025-10-30 22:22:11.91240445 +0000 GMT m=+0.165172059 [debug] templa
 
 
 - fixed typo
+``` yml
 autoscaling:
   enabled: false
+```
 
 
 It seems that there are plenty errors coming from NOTES.txt, basically Helm throws those nil pointer errors if a varible is not declared in values.yaml. Checking the NOTES.txt in the repo used by the tutorial, it's much smaller. So I assume with newer version my auto generated NOTES.txt just has different variables, which is not covered by the tutorial. My lazy workaround is to exclude the file by renaming it to *.bak
@@ -326,8 +325,10 @@ password change: argocdadmin
 
 
 Sync problem persits, because
+```
 httpRoute:
   enabled: true
+```
 doesn't exist, I probably have to just push the changes to the repo, but let's try to apply the changes manually
 
 ```
@@ -399,7 +400,7 @@ argocd/devops-project-2025  https://kubernetes.default.svc  default    default  
 dom@DESKTOP-DOM:~/git/devops-project-2025$
 ```
 
-Now I can finally log in with the argocd cli and on the web UI it doesn't stuck loading, but there is next error which seems familiar:
+Now I can finally log in with the argocd CLI and on the web UI it doesn't stuck loading, but there is next error which seems familiar:
 
 ``` sh
 ComparisonError: Failed to load target state: failed to generate manifest for source 1 of 1: rpc error: code = Unknown desc = Manifest generation error (cached): failed to execute helm template command: failed to get command args to log: `helm template . --name-template devops-project-2025 --namespace default --kube-version 1.34 <api versions removed> --include-crds` failed exit status 1: Error: template: complete-devops-project-time-printer/templates/httproute.yaml:1:14: executing "complete-devops-project-time-printer/templates/httproute.yaml" at <.Values.httpRoute.enabled>: nil pointer evaluating interface {}.enabled
@@ -435,4 +436,90 @@ NAME                                                              READY   STATUS
 devops-project-2025-complete-devops-project-time-printer-7jlsjs   0/1     CrashLoopBackOff   6 (71s ago)   6m58s
 devops-project-2025-complete-devops-project-time-printer-7rz4hs   0/1     CrashLoopBackOff   6 (92s ago)   7m41s
 dom@DESKTOP-DOM:~/git/devops-project-2025$
+```
+
+
+That was just a typo, easy fix
+```
+dom@DESKTOP-DOM:~/git/devops-project-2025$ kubectl logs devops-project-2025-complete-devops-project-time-printer-7jlsjs Traceback (most recent call last): File "/app/app.py", line 1, in from flask import flask ImportError: cannot import name 'flask' from 'flask' (/usr/local/lib/python3.9/site-packages/flask/init.py)
+```
+Updating this and pushing the change to the repo automatically deploys a new version of the pod
+
+
+Final Test
+- Updated the py file again, pushed the changes, everything got updated
+- Now I need to foward the port to the actual app
+``` sh
+dom@DESKTOP-DOM:~/git/devops-project-2025$ kubectl get pods --all-namespaces
+NAMESPACE        NAME                                                              READY   STATUS      RESTARTS        AGE
+argocd           argocd-application-controller-0                                   1/1     Running     0               70m
+argocd           argocd-applicationset-controller-86bfbfd54c-wxczg                 1/1     Running     0               70m
+argocd           argocd-dex-server-86bd88bb45-p9n54                                1/1     Running     0               70m
+argocd           argocd-notifications-controller-67cc46b754-h2dnz                  1/1     Running     0               70m
+argocd           argocd-redis-757f74dd67-lzlfc                                     1/1     Running     0               70m
+argocd           argocd-repo-server-584c99df7d-mwwdm                               1/1     Running     0               70m
+argocd           argocd-server-5496498b9-kqpql                                     1/1     Running     0               70m
+default          devops-project-2025-complete-devops-project-time-printer-7fgfxp   1/1     Running     0               38s
+gateway-system   gateway-api-admission-gw6lb                                       0/1     Completed   0               37m
+gateway-system   gateway-api-admission-patch-ztpm5                                 0/1     Completed   0               37m
+gateway-system   gateway-api-admission-server-55bfc4b65c-sx59w                     1/1     Running     0               37m
+kube-system      coredns-66bc5c9577-tbpf4                                          1/1     Running     10 (153m ago)   7d23h
+kube-system      etcd-minikube                                                     1/1     Running     10 (153m ago)   7d23h
+kube-system      kube-apiserver-minikube                                           1/1     Running     10 (153m ago)   7d23h
+kube-system      kube-controller-manager-minikube                                  1/1     Running     10 (153m ago)   7d23h
+kube-system      kube-proxy-vtxmq                                                  1/1     Running     10 (153m ago)   7d23h
+kube-system      kube-scheduler-minikube                                           1/1     Running     10 (153m ago)   7d23h
+kube-system      storage-provisioner                                               1/1     Running     20 (152m ago)   7d23h
+dom@DESKTOP-DOM:~/git/devops-project-2025$ kubectl port-forward pod/devops-project-2025-complete-devops-project-time-printer-7fgfxp 8080:8080 -n default
+Forwarding from 127.0.0.1:8080 -> 8080
+Forwarding from [::1]:8080 -> 8080
+Handling connection for 8080
+Handling connection for 8080
+Handling connection for 8080
+```
+- And I can access 127.0.0.1:8080 in the browser, displaying `Current time of the day: 2025-10-31 22:05:41`
+- Success
+
+
+
+
+# Used Versions
+Since I had so much trouble with different versions, this is what I have used
+- I'm on Windows 10 Home (10.0.19045 Build 19045)
+- Using WSL2 (Ubuntu 24.04.3 LTS)
+- Installed Docker Desktop (v4.49.0) on Windows
+- And the rest on Ubuntu
+```
+dom@DESKTOP-DOM:~$ argocd version
+argocd: v3.1.9+8665140
+  BuildDate: 2025-10-17T22:07:41Z
+  GitCommit: 8665140f96f6b238a20e578dba7f9aef91ddac51
+  GitTreeState: clean
+  GoVersion: go1.24.6
+  Compiler: gc
+  Platform: linux/amd64
+argocd-server: v3.1.9+8665140
+  BuildDate: 2025-10-17T21:35:08Z
+  GitCommit: 8665140f96f6b238a20e578dba7f9aef91ddac51
+  GitTreeState: clean
+  GoVersion: go1.24.6
+  Compiler: gc
+  Platform: linux/amd64
+  Kustomize Version: v5.7.0 2025-06-28T07:00:07Z
+  Helm Version: v3.18.4+gd80839c
+  Kubectl Version: v0.33.1
+  Jsonnet Version: v0.21.0
+dom@DESKTOP-DOM:~$ helm version
+version.BuildInfo{Version:"v3.19.0", GitCommit:"3d8990f0836691f0229297773f3524598f46bda6", GitTreeState:"clean", GoVersion:"go1.24.7"}
+dom@DESKTOP-DOM:~$ kubectl version
+Client Version: v1.34.1
+Kustomize Version: v5.7.1
+Server Version: v1.34.0
+dom@DESKTOP-DOM:~$ minikube version
+minikube version: v1.37.0
+commit: 65318f4cfff9c12cc87ec9eb8f4cdd57b25047f3
+dom@DESKTOP-DOM:~$ terraform version
+Terraform v1.13.4
+on linux_amd64
+dom@DESKTOP-DOM:~$
 ```
