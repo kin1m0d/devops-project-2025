@@ -234,3 +234,175 @@ dom@DESKTOP-DOM:~/git/devops-project-2025$ kubectl apply -f argocd-app.yaml
 application.argoproj.io/devops-project-2025 created
 ```
 
+# Day 5 (30.10.2025)
+
+In argocd I'll get the following sync error (https://localhost:9999/applications/argocd/devops-project-2025?view=tree&resource=&operation=true)
+
+``` sh
+ComparisonError: rpc error: code = Unknown desc = Manifest generation error (cached): `helm template . --name-template devops-project-2025 --namespace default --kube-version 1.34 --api-versions admissionregistration.k8s.io/v1 --api-versions admissionregistration.k8s.io/v1/MutatingWebhookConfiguration --api-versions admissionregistration.k8s.io/v1/ValidatingAdmissionPolicy --api-versions admissionregistration.k8s.io/v1/ValidatingAdmissionPolicyBinding --api-versions admissionregistration.k8s.io/v1/ValidatingWebhookConfiguration --api-versions apiextensions.k8s.io/v1 --api-versions apiextensions.k8s.io/v1/CustomResourceDefinition --api-versions apiregistration.k8s.io/v1 --api-versions apiregistration.k8s.io/v1/APIService --api-versions apps/v1 --api-versions apps/v1/ControllerRevision --api-versions apps/v1/DaemonSet --api-versions apps/v1/Deployment --api-versions apps/v1/ReplicaSet --api-versions apps/v1/StatefulSet --api-versions argoproj.io/v1alpha1 --api-versions argoproj.io/v1alpha1/AppProject --api-versions argoproj.io/v1alpha1/Application --api-versions argoproj.io/v1alpha1/ApplicationSet --api-versions autoscaling/v1 --api-versions autoscaling/v1/HorizontalPodAutoscaler --api-versions autoscaling/v2 --api-versions autoscaling/v2/HorizontalPodAutoscaler --api-versions batch/v1 --api-versions batch/v1/CronJob --api-versions batch/v1/Job --api-versions certificates.k8s.io/v1 --api-versions certificates.k8s.io/v1/CertificateSigningRequest --api-versions coordination.k8s.io/v1 --api-versions coordination.k8s.io/v1/Lease --api-versions discovery.k8s.io/v1 --api-versions discovery.k8s.io/v1/EndpointSlice --api-versions events.k8s.io/v1 --api-versions events.k8s.io/v1/Event --api-versions flowcontrol.apiserver.k8s.io/v1 --api-versions flowcontrol.apiserver.k8s.io/v1/FlowSchema --api-versions flowcontrol.apiserver.k8s.io/v1/PriorityLevelConfiguration --api-versions networking.k8s.io/v1 --api-versions networking.k8s.io/v1/IPAddress --api-versions networking.k8s.io/v1/Ingress --api-versions networking.k8s.io/v1/IngressClass --api-versions networking.k8s.io/v1/NetworkPolicy --api-versions networking.k8s.io/v1/ServiceCIDR --api-versions node.k8s.io/v1 --api-versions node.k8s.io/v1/RuntimeClass --api-versions policy/v1 --api-versions policy/v1/PodDisruptionBudget --api-versions rbac.authorization.k8s.io/v1 --api-versions rbac.authorization.k8s.io/v1/ClusterRole --api-versions rbac.authorization.k8s.io/v1/ClusterRoleBinding --api-versions rbac.authorization.k8s.io/v1/Role --api-versions rbac.authorization.k8s.io/v1/RoleBinding --api-versions resource.k8s.io/v1 --api-versions resource.k8s.io/v1/DeviceClass --api-versions resource.k8s.io/v1/ResourceClaim --api-versions resource.k8s.io/v1/ResourceClaimTemplate --api-versions resource.k8s.io/v1/ResourceSlice --api-versions scheduling.k8s.io/v1 --api-versions scheduling.k8s.io/v1/PriorityClass --api-versions storage.k8s.io/v1 --api-versions storage.k8s.io/v1/CSIDriver --api-versions storage.k8s.io/v1/CSINode --api-versions storage.k8s.io/v1/CSIStorageCapacity --api-versions storage.k8s.io/v1/StorageClass --api-versions storage.k8s.io/v1/VolumeAttachment --api-versions storage.k8s.io/v1/VolumeAttributesClass --api-versions v1 --api-versions v1/ConfigMap --api-versions v1/Endpoints --api-versions v1/Event --api-versions v1/LimitRange --api-versions v1/Namespace --api-versions v1/Node --api-versions v1/PersistentVolume --api-versions v1/PersistentVolumeClaim --api-versions v1/Pod --api-versions v1/PodTemplate --api-versions v1/ReplicationController --api-versions v1/ResourceQuota --api-versions v1/Secret --api-versions v1/Service --api-versions v1/ServiceAccount --include-crds` failed exit status 1: Error: template: complete-devops-project-time-printer/templates/httproute.yaml:1:14: executing "complete-devops-project-time-printer/templates/httproute.yaml" at <.Values.httpRoute.enabled>: nil pointer evaluating interface {}.enabled Use --debug flag to render out invalid YAML
+```
+
+I can't even be bothered to read this, luckily we have AI these days, which quickly tells me:
+
+The error indicates that Helm failed to render the template complete-devops-project-time-printer/templates/httproute.yaml because it encountered a nil pointer error while trying to evaluate .Values.httpRoute.enabled. This typically happens when the httpRoute key is missing or not properly defined in the values.yaml file or when the template assumes a value that is not provided.
+
+
+Now we can reproduce this manually by generating the helm template:
+
+``` sh
+dom@DESKTOP-DOM:~/git/devops-project-2025$ helm template . --name-template devops-project-2025 --namespace default
+Error: chart file "terraform-provider-helm_v2.16.1_x5" is larger than the maximum file size 5242880
+```
+
+Which of course fails, but this seems like another issue...
+
+
+``` sh
+dom@DESKTOP-DOM:~/git/devops-project-2025$ find . -name "terraform-provider-helm_v2.16.1_x5"
+./terraform-configs/.terraform/providers/registry.terraform.io/hashicorp/helm/2.16.1/linux_amd64/terraform-provider-helm_v2.16.1_x5
+```
+
+Okay this file is ignored by the .gitignore, but why the error???? Yeah I should run the command not from the project root directory, it will include ALL files.
+
+``` sh
+dom@DESKTOP-DOM:~/git/devops-project-2025$ helm template complete-devops-project-time-printer --name-template devops-project-2025 --namespace default
+Error: template: complete-devops-project-time-printer/templates/httproute.yaml:1:14: executing "complete-devops-project-time-printer/templates/httproute.yaml" at <.Values.httpRoute.enabled>: nil pointer evaluating interface {}.enabled
+
+Use --debug flag to render out invalid YAML
+```
+
+There we go, now we get pretty much the same error message as in argocd.
+
+
+``` yaml
+httpRoute:
+  enabled: true
+```
+adding to values.yaml file
+
+
+```
+dom@DESKTOP-DOM:~/git/devops-project-2025$ helm template complete-devops-project-time-printer --name-template devops-project-2025 --namespace default --debug
+install.go:225: 2025-10-30 22:22:11.907908786 +0000 GMT m=+0.160676395 [debug] Original chart version: ""
+install.go:242: 2025-10-30 22:22:11.908394076 +0000 GMT m=+0.161161583 [debug] CHART PATH: /home/dom/git/devops-project-2025/complete-devops-project-time-printer
+
+
+Error: template: complete-devops-project-time-printer/templates/hpa.yaml:1:14: executing "complete-devops-project-time-printer/templates/hpa.yaml" at <.Values.autoscaling.enabled>: nil pointer evaluating interface {}.enabled
+helm.go:92: 2025-10-30 22:22:11.91240445 +0000 GMT m=+0.165172059 [debug] template: complete-devops-project-time-printer/templates/hpa.yaml:1:14: executing "complete-devops-project-time-printer/templates/hpa.yaml" at <.Values.autoscaling.enabled>: nil pointer evaluating interface {}.enabled
+```
+
+- I can debug with just adding --debug to helm template
+
+
+- fixed typo
+autoscaling:
+  enabled: false
+
+
+It seems that there are plenty errors coming from NOTES.txt, basically Helm throws those nil pointer errors if a varible is not declared in values.yaml. Checking the NOTES.txt in the repo used by the tutorial, it's much smaller. So I assume with newer version my auto generated NOTES.txt just has different variables, which is not covered by the tutorial. My lazy workaround is to exclude the file by renaming it to *.bak
+
+
+
+The argocd syncing problem persists
+``` sh
+dom@DESKTOP-DOM:~/git/devops-project-2025$ kubectl get pods -n argocd
+NAME                                               READY   STATUS    RESTARTS       AGE
+argocd-application-controller-0                    1/1     Running   2 (114m ago)   26h
+argocd-applicationset-controller-69777454d-nl42k   1/1     Running   2 (114m ago)   26h
+argocd-dex-server-9fcc8cd6-qlhbj                   1/1     Running   2 (114m ago)   26h
+argocd-notifications-controller-6c875d4fd4-w7z72   1/1     Running   2 (114m ago)   26h
+argocd-redis-6f895956df-9l659                      1/1     Running   2 (114m ago)   26h
+argocd-repo-server-7f745d844-jpv29                 1/1     Running   2 (114m ago)   26h
+argocd-server-558bfbfcfb-bkslq                     1/1     Running   2 (114m ago)   26h
+dom@DESKTOP-DOM:~/git/devops-project-2025$ kubectl -n argocd get applications
+NAME                  SYNC STATUS   HEALTH STATUS
+devops-project-2025   Unknown       Healthy
+```
+
+
+# Day 6 (31.10.2025)
+
+password change: argocdadmin
+
+
+Sync problem persits, because
+httpRoute:
+  enabled: true
+doesn't exist, I probably have to just push the changes to the repo, but let's try to apply the changes manually
+
+```
+dom@DESKTOP-DOM:~/git/devops-project-2025$ argocd login localhost:9999 --username admin --password argocdadmin --insecure --grpc-web
+{"level":"fatal","msg":"context deadline exceeded","time":"2025-10-31T20:31:07Z"}
+dom@DESKTOP-DOM:~/git/devops-project-2025$ argocd version
+argocd: v3.1.9+8665140
+  BuildDate: 2025-10-17T22:07:41Z
+  GitCommit: 8665140f96f6b238a20e578dba7f9aef91ddac51
+  GitTreeState: clean
+  GoVersion: go1.24.6
+  Compiler: gc
+  Platform: linux/amd64
+{"level":"warning","msg":"Failed to invoke grpc call. Use flag --grpc-web in grpc calls. To avoid this warning message, use flag --grpc-web.","time":"2025-10-31T20:35:55Z"}
+argocd-server: v2.5.8+bbe870f
+dom@DESKTOP-DOM:~/git/devops-project-2025$
+```
+
+ChatGPT says:
+That’s a major version gap (3.x vs 2.x).
+The CLI introduced breaking changes in the gRPC/web handshake starting from Argo CD v3.0, meaning your newer CLI can’t talk to the older 2.5.x API — hence the:
+
+context deadline exceeded
+rpc error: code = Unauthenticated desc = no session information
+
+
+apply fix
+``` sh
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+
+``` sh
+dom@DESKTOP-DOM:~/git/devops-project-2025$ kubectl get pods -n argocd
+NAME                                                READY   STATUS        RESTARTS      AGE
+argocd-application-controller-0                     1/1     Running       0             34s
+argocd-applicationset-controller-86bfbfd54c-wxczg   1/1     Running       0             35s
+argocd-dex-server-86bd88bb45-p9n54                  1/1     Running       0             35s
+argocd-notifications-controller-67cc46b754-h2dnz    1/1     Running       0             34s
+argocd-redis-757f74dd67-lzlfc                       1/1     Running       0             35s
+argocd-repo-server-584c99df7d-mwwdm                 1/1     Running       0             35s
+argocd-repo-server-7f745d844-jpv29                  1/1     Terminating   3 (83m ago)   2d
+argocd-server-5496498b9-kqpql                       1/1     Running       0             34s
+argocd-server-558bfbfcfb-bkslq                      1/1     Terminating   3 (83m ago)   2d
+dom@DESKTOP-DOM:~/git/devops-project-2025$ kubectl get pods -n argocd
+NAME                                                READY   STATUS    RESTARTS   AGE
+argocd-application-controller-0                     1/1     Running   0          98s
+argocd-applicationset-controller-86bfbfd54c-wxczg   1/1     Running   0          99s
+argocd-dex-server-86bd88bb45-p9n54                  1/1     Running   0          99s
+argocd-notifications-controller-67cc46b754-h2dnz    1/1     Running   0          98s
+argocd-redis-757f74dd67-lzlfc                       1/1     Running   0          99s
+argocd-repo-server-584c99df7d-mwwdm                 1/1     Running   0          99s
+argocd-server-5496498b9-kqpql                       1/1     Running   0          98s
+dom@DESKTOP-DOM:~/git/devops-project-2025$ argocd login localhost:9999 --username admin --password argocdadmin --insecure --grpc-we
+b
+'admin:login' logged in successfully
+Context 'localhost:9999' updated
+```
+
+Sanity check
+``` sh
+dom@DESKTOP-DOM:~/git/devops-project-2025$ argocd account get-user-info
+Logged In: true
+Username: admin
+Issuer: argocd
+Groups:
+dom@DESKTOP-DOM:~/git/devops-project-2025$ argocd app list
+NAME                        CLUSTER                         NAMESPACE  PROJECT  STATUS   HEALTH   SYNCPOLICY  CONDITIONS       REPO                                            PATH                                  TARGET
+argocd/devops-project-2025  https://kubernetes.default.svc  default    default  Unknown  Healthy  Auto-Prune  ComparisonError  https://github.com/kin1m0d/devops-project-2025  complete-devops-project-time-printer  HEAD
+dom@DESKTOP-DOM:~/git/devops-project-2025$
+```
+
+Now I can finally log in with the argocd cli and on the web UI it doesn't stuck loading, but there is next error which seems familiar:
+
+``` sh
+ComparisonError: Failed to load target state: failed to generate manifest for source 1 of 1: rpc error: code = Unknown desc = Manifest generation error (cached): failed to execute helm template command: failed to get command args to log: `helm template . --name-template devops-project-2025 --namespace default --kube-version 1.34 <api versions removed> --include-crds` failed exit status 1: Error: template: complete-devops-project-time-printer/templates/httproute.yaml:1:14: executing "complete-devops-project-time-printer/templates/httproute.yaml" at <.Values.httpRoute.enabled>: nil pointer evaluating interface {}.enabled
+
+Use --debug flag to render out invalid YAML
+```
