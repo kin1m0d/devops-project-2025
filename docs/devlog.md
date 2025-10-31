@@ -406,3 +406,10 @@ ComparisonError: Failed to load target state: failed to generate manifest for so
 
 Use --debug flag to render out invalid YAML
 ```
+
+
+Pushed the changes, trying to sync, but 
+
+```
+The Kubernetes API could not find gateway.networking.k8s.io/HTTPRoute for requested resource default/devops-project-2025-complete-devops-project-time-printer. Make sure the "HTTPRoute" CRD is installed on the destination cluster.
+```
