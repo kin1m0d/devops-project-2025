@@ -413,3 +413,26 @@ Pushed the changes, trying to sync, but
 ```
 The Kubernetes API could not find gateway.networking.k8s.io/HTTPRoute for requested resource default/devops-project-2025-complete-devops-project-time-printer. Make sure the "HTTPRoute" CRD is installed on the destination cluster.
 ```
+
+Updated the version in httproute.yaml to v1alpha2
+```
+apiVersion: gateway.networking.k8s.io/v1alpha2
+```
+
+Now it syncs but the actual app is failing
+``` sh
+dom@DESKTOP-DOM:~/git/devops-project-2025$ kubectl get pods -n argocd
+NAME                                                READY   STATUS    RESTARTS   AGE
+argocd-application-controller-0                     1/1     Running   0          53m
+argocd-applicationset-controller-86bfbfd54c-wxczg   1/1     Running   0          53m
+argocd-dex-server-86bd88bb45-p9n54                  1/1     Running   0          53m
+argocd-notifications-controller-67cc46b754-h2dnz    1/1     Running   0          53m
+argocd-redis-757f74dd67-lzlfc                       1/1     Running   0          53m
+argocd-repo-server-584c99df7d-mwwdm                 1/1     Running   0          53m
+argocd-server-5496498b9-kqpql                       1/1     Running   0          53m
+dom@DESKTOP-DOM:~/git/devops-project-2025$ kubectl get pods
+NAME                                                              READY   STATUS             RESTARTS      AGE
+devops-project-2025-complete-devops-project-time-printer-7jlsjs   0/1     CrashLoopBackOff   6 (71s ago)   6m58s
+devops-project-2025-complete-devops-project-time-printer-7rz4hs   0/1     CrashLoopBackOff   6 (92s ago)   7m41s
+dom@DESKTOP-DOM:~/git/devops-project-2025$
+```

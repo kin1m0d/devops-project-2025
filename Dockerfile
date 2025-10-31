@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY app.py .
 
-RUN pip install --no-cache-dir flask
+RUN pip install flask
 
 EXPOSE 8080
 
