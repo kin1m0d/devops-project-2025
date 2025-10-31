@@ -1,6 +1,6 @@
 image:
   repository: kinimod311/devops-project-2025
-  tag: 83be678
+  tag: adc4519
   pullPolicy: IfNotPresent
 service:
   type: ClusterIP
